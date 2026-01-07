@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 from setuptools import find_packages
 from setuptools.command.build_py import build_py
+from setuptools.command.build_ext import build_ext
 from packaging.version import parse
 from pathlib import Path
 from torch.utils.cpp_extension import CUDAExtension, CUDA_HOME
@@ -125,6 +126,19 @@ class CustomBuildPy(build_py):
         # Finally, run the regular build
         build_py.run(self)
 
+
+class CustomBuildExt(build_ext):
+    def run(self):
+        super().run()
+        self.copy_built_shared_objects()
+
+    def copy_built_shared_objects(self):
+        build_dir = os.path.join(current_dir, 'build')
+        target_dir = os.path.join(self.build_lib, 'deep_gemm')
+        os.makedirs(target_dir, exist_ok=True)
+        for so_path in Path(build_dir).rglob('*.so'):
+            shutil.copy2(so_path, os.path.join(target_dir, so_path.name))
+
     def generate_pyi_file(self):
         generate_pyi_file(name='_C', root='./csrc', output_dir='./stubs')
         pyi_source = os.path.join(current_dir, 'stubs', '_C.pyi')
@@ -208,6 +222,7 @@ if __name__ == '__main__':
         zip_safe=False,
         cmdclass={
             'build_py': CustomBuildPy,
+            'build_ext': CustomBuildExt,
             'bdist_wheel': CachedWheelsCommand,
         },
     )
