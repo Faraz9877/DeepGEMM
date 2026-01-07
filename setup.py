@@ -126,19 +126,6 @@ class CustomBuildPy(build_py):
         # Finally, run the regular build
         build_py.run(self)
 
-
-class CustomBuildExt(build_ext):
-    def run(self):
-        super().run()
-        self.copy_built_shared_objects()
-
-    def copy_built_shared_objects(self):
-        build_dir = os.path.join(current_dir, 'build')
-        target_dir = os.path.join(self.build_lib, 'deep_gemm')
-        os.makedirs(target_dir, exist_ok=True)
-        for so_path in Path(build_dir).rglob('*.so'):
-            shutil.copy2(so_path, os.path.join(target_dir, so_path.name))
-
     def generate_pyi_file(self):
         generate_pyi_file(name='_C', root='./csrc', output_dir='./stubs')
         pyi_source = os.path.join(current_dir, 'stubs', '_C.pyi')
@@ -177,6 +164,19 @@ class CustomBuildExt(build_ext):
 
             # Copy the directory
             shutil.copytree(src_dir, dst_dir)
+
+
+class CustomBuildExt(build_ext):
+    def run(self):
+        super().run()
+        self.copy_built_shared_objects()
+
+    def copy_built_shared_objects(self):
+        build_dir = os.path.join(current_dir, 'build')
+        target_dir = os.path.join(self.build_lib, 'deep_gemm')
+        os.makedirs(target_dir, exist_ok=True)
+        for so_path in Path(build_dir).rglob('*.so'):
+            shutil.copy2(so_path, os.path.join(target_dir, so_path.name))
 
 
 class CachedWheelsCommand(_bdist_wheel):
