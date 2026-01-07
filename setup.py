@@ -175,9 +175,11 @@ class CustomBuildExt(build_ext):
         build_dir = os.path.join(current_dir, 'build')
         target_dir = os.path.join(self.build_lib, 'deep_gemm')
         os.makedirs(target_dir, exist_ok=True)
-        for so_path in Path(build_dir).rglob('*.so'):
-            print(f'Copying built shared object {so_path} to {target_dir}')
-            shutil.copy2(so_path, os.path.join(target_dir, so_path.name))
+        try:
+            for so_path in Path(build_dir).rglob('*.so'):
+                shutil.copy2(so_path, os.path.join(target_dir, so_path.name))
+        except Exception as e:
+            print(f'Error copying shared objects: {e}')
 
 
 class CachedWheelsCommand(_bdist_wheel):
