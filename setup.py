@@ -172,11 +172,14 @@ class CustomBuildExt(build_ext):
         self.copy_built_shared_objects()
 
     def copy_built_shared_objects(self):
-        build_dir = os.path.join(current_dir, 'build')
-        target_dir = os.path.join(self.build_lib, 'deep_gemm')
+        build_dir = Path(current_dir) / 'build'
+        target_dir = Path(self.build_lib) / 'deep_gemm'
         os.makedirs(target_dir, exist_ok=True)
-        for so_path in Path(build_dir).rglob('*.so'):
-            shutil.copy2(so_path, os.path.join(target_dir, so_path.name))
+        for so_path in build_dir.rglob('*.so'):
+            # Skip files already in the target directory to avoid self-copy errors.
+            if target_dir in so_path.parents:
+                continue
+            shutil.copy2(so_path, target_dir / so_path.name)
 
 
 class CachedWheelsCommand(_bdist_wheel):
